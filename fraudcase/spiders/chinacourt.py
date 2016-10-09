@@ -36,7 +36,7 @@ class ChinacourtSpider(scrapy.Spider):
         """解析详细页面"""
         data = response.meta['data']
         source = response.xpath('//span[@class="source"]/text()').extract_first()
-        content = response.xpath('//div[@class="detail_txt"]/text()')
+        content = response.xpath('//div[@class="detail_txt"]/text()').extract()
         #列表转字符串
         content = ''.join(str(item) for item in content)
         data['source'] = source
