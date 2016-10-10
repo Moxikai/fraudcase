@@ -9,6 +9,7 @@ import time
 import scrapy
 from scrapy import Request,FormRequest
 
+
 from fraudcase.items import NewsItem
 
 
@@ -75,7 +76,23 @@ class ChinacourtSpider(scrapy.Spider):
                     'author_source': item['author_source'],
                     'url_source': item['url_source'],
                     'url_crawl': item['url_crawl'],
+                    'submit':'submit',
                     }
-        yield FormRequest(url = self.post_url,formdata=formdata,dont_filter=True)
-        yield item
+        yield Request(url=self.post_url,
+                      meta={'formdata':formdata,
+                            'dont_cache':True},
+                      callback=self.postToServer,
+                      dont_filter=True,
+                      )
+
+    def postToServer(self,response):
+        """提交数据到服务器"""
+        #print response.body
+        csrf_token = response.xpath('//input[@id="csrf_token"]/@value').extract_first()
+        print 'csrf_token:',csrf_token
+        formdata = response.meta['formdata']
+        formdata['csrf_token'] = csrf_token
+        yield FormRequest.from_response(response,formdata=formdata)
+
+
 
