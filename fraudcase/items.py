@@ -6,9 +6,18 @@
 # http://doc.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+from scrapy import Item,Field
 
-
-class FraudcaseItem(scrapy.Item):
+class NewsItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     pass
+    id = Field()
+    title = Field()
+    content = Field()
+    date_publish = Field()
+    date_crawl = Field()
+    agency_source = Field()
+    author_source = Field()
+    url_source = Field()
+    url_crawl = Field()

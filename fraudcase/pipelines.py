@@ -5,7 +5,8 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
+from scrapy import FormRequest
 
-class FraudcasePipeline(object):
+class SQLitePipeline():
     def process_item(self, item, spider):
         return item

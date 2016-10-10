@@ -3,9 +3,19 @@
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
+import hashlib
+import time
 
 import scrapy
-from scrapy import Request
+from scrapy import Request,FormRequest
+
+from fraudcase.items import NewsItem
+
+
+def getSignName(string):
+    sha1 = hashlib.sha1()
+    sha1.update(string)
+    return sha1.hexdigest()
 
 class ChinacourtSpider(scrapy.Spider):
     name = "chinacourt"
@@ -15,14 +25,14 @@ class ChinacourtSpider(scrapy.Spider):
         'http://www.chinacourt.org/article/index/id/MzAwNDAwAiPCAAA%3D.shtml',
         'http://www.chinacourt.org/article/index/id/MzAwNDAwMjAwNiACAAA%3D.shtml',
     )
-
+    post_url = 'http://127.0.0.1:5000/news/update'
     def parse(self, response):
         """解析列表页"""
         lis = response.xpath('//div[@id="articleList"]/ul/li')
 
         data_list = [{'link':li.xpath('span[@class="left"]/a/@href').extract_first(),
                       'title':li.xpath('span[@class="left"]/a/text()').extract_first(),
-                      'date':li.xpath('span[@class="right"]/text()').extract_first()} for li in lis]
+                      } for li in lis]
         for data in data_list:
             data['link'] = 'http://www.chinacourt.org'+data['link']
             yield Request(url=data['link'],callback=self.parseDetail,meta={'data':data})
@@ -39,12 +49,33 @@ class ChinacourtSpider(scrapy.Spider):
 
     def parseDetail(self,response):
         """解析详细页面"""
+        item = NewsItem()
         data = response.meta['data']
-        source = response.xpath('//span[@class="source"]/text()').extract_first()
+        date_publish = response.xpath('//span[@class="time"]/text()').extract_first()
+        agency_source = response.xpath('//span[@class="source"]/text()').extract_first()
+        author_source = response.xpath('//span[@class="writer"]/text()').extract_first()
         content = response.xpath('//div[@class="detail_txt"]/text()').extract()
         #列表转字符串
-        content = ''.join(str(item) for item in content)
-        data['source'] = source
-        data['content'] = content
-        yield data
+        content = ''.join(str(i) for i in content)
+        item['url_crawl'] = data['link']
+        item['url_source'] = ''
+        item['title'] = data['title']
+        item['date_publish'] = date_publish
+        item['date_crawl'] = str(time.time())
+        item['agency_source'] = unicode(agency_source)
+        item['author_source'] = unicode(author_source)
+        item['content'] = content
+        item['id'] = getSignName(item['url_crawl'])
+        formdata = {'id': item['id'],
+                    'title': item['title'],
+                    'content': item['content'],
+                    'date_crawl': item['date_crawl'],
+                    'date_publish': item['date_publish'],
+                    'agency_source': item['agency_source'],
+                    'author_source': item['author_source'],
+                    'url_source': item['url_source'],
+                    'url_crawl': item['url_crawl'],
+                    }
+        yield FormRequest(url = self.post_url,formdata=formdata,dont_filter=True)
+        yield item
 
