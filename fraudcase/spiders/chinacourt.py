@@ -55,7 +55,7 @@ class ChinacourtSpider(scrapy.Spider):
         date_publish = response.xpath('//span[@class="time"]/text()').extract_first()
         agency_source = response.xpath('//span[@class="source"]/text()').extract_first()
         author_source = response.xpath('//span[@class="writer"]/text()').extract_first()
-        content = response.xpath('//div[@class="detail_txt"]/text()').extract()
+        content = response.xpath('//div[@class="detail_txt"]').extract()
         #列表转字符串
         content = ''.join(str(i) for i in content)
         item['url_crawl'] = data['link']
